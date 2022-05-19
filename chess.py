@@ -1,4 +1,6 @@
 from calendar import TUESDAY
+from http.client import UNPROCESSABLE_ENTITY
+from pickle import FALSE
 from cmu_graphics import *
 
 app.rows = 8
@@ -20,7 +22,7 @@ def drawBoard():
             else:
                 color = "navajoWhite"
 
-            r = Rect(40 + col * 40, 40 + row * 40, 40, 40, fill = color)
+            r = Rect(40 + col * 40, 40 + row * 40, 40, 40, fill = color, opacity = 80)
             r.vert = boardVertPos[row]
             r.horiz = boardHorizPos[col]
             board[row][col] = r
@@ -306,11 +308,6 @@ for i in range(8):
     # if i < 7:
     whitePieces.append(whitePawns[i])
     blackPieces.append(blackPawns[i])
-
-## test pawn
-# drawPawn('navajoWhite', 220, 260)
-# whitePieces.append(whitePawns[8])
-
 
 selectedMarkers = Group()
 moveMarkers = Group()
@@ -711,9 +708,13 @@ def checkRookMoves(playerMove, x, y):
                 print(vert, horiz)
 
                 moveUp = True
+                nextUp = False
                 moveDown = True
+                nextDown = False
                 moveR = True
+                nextR = False
                 moveL = True
+                nextL = False
 
                 if vert == '8':
                     moveUp = False
@@ -722,36 +723,718 @@ def checkRookMoves(playerMove, x, y):
 
                 if horiz == 'A':
                     moveL = False
-                elif horiz == 'G':
+                elif horiz == 'H':
                     moveR = False
+                    # print('move r disabled cuz col')
+
+                # if playerMove == 'white':
+                countUp = 1
+                while moveUp == True:
+                # for j in range(8):
+                    # print('row and count', row, countUp)
+                    # print('dif', row-countUp)
+                    if row-countUp == -1:
+                        moveUp = False
+                        # print('move up disabled because of board boundaries')
+                    
+                    if moveUp == True:
+                        if playerMove == 'white':
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move up is', moveUp)
+
+                                if board[row-countUp][col].hits(targetX, targetY):
+                                    moveUp = False
+                                    # print('move up disabled because of hit white piece')
+
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move up is', moveUp, 'black check')
+
+                                if board[row-countUp][col].hits(targetX, targetY):
+                                    moveUp = False
+                                    nextUp = True
+                                    # print('move up disabled because of hit black Piece')
+                                    print(blackPieces[i].name)
+
+                        elif playerMove == 'black':
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move up is', moveUp)
+
+                                if board[row-countUp][col].hits(targetX, targetY):
+                                    moveUp = False
+                                    # print('move up disabled because of hit white piece')
+
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move up is', moveUp, 'white check')
+
+                                if board[row-countUp][col].hits(targetX, targetY):
+                                    moveUp = False
+                                    nextUp = True
+                                    # print('move up disabled because of hit black Piece')
+                                    print(whitePieces[i].name)
+
+                    if moveUp == True:
+                        addMoveMarker(row-countUp, col)
+                        # print('added marker at', row-countUp, col)
+                        # if moveUp == False:
+                        #     break
+                        # print('added upmove marker at', board[row-countUp][col].vert, board[row-countUp][col].horiz)
+                    if nextUp == True:
+                        addMoveMarker(row-countUp, col)
+                        # print('added marker on black piece')
+                    countUp += 1
+
+                countDown = 1
+                while moveDown == True:
+                    print(row, countDown)
+
+                    # if row+countDown < 8:
+                    # if board[row+countDown][col].centerY > 340:
+                    #     moveDown = False
+                    if row+countDown == 8:
+                        moveDown = False
+
+                    if moveDown == True:
+                        if playerMove == 'white':
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move down is', moveDown)
+
+                                if board[row+countDown][col].hits(targetX, targetY):
+                                    moveDown = False
+
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move down is', moveDown, 'black check')
+
+                                if board[row+countDown][col].hits(targetX, targetY):
+                                    moveDown = False
+                                    nextDown = True
+                                    print(blackPieces[i].name)
+
+                        elif playerMove == 'black':
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move down is', moveDown)
+
+                                if board[row+countDown][col].hits(targetX, targetY):
+                                    moveDown = False
+                                
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move down is', moveDown, 'white check')
+
+                                if board[row+countDown][col].hits(targetX, targetY):
+                                    moveDown = False
+                                    nextDown = True
+                                    print(whitePieces[i].name)
+                
+                    if moveDown == True:
+                        addMoveMarker(row+countDown, col)
+                        # print('added downmove marker on', board[row+countDown][col].vert, board[row+countDown][col].horiz)
+                    
+                    if nextDown == True:
+                        addMoveMarker(row+countDown, col)
+                        # print('added downmove marker on', board[row+countDown][col].vert, board[row+countDown][col].horiz)
+                    countDown += 1
+                # for x in range
+
+                countR = 1
+                while moveR == True:
+                    if col+countR == 8:
+                        moveR = False
+                        # print('disable move r cuz col + count')
+
+                    if moveR == True:
+                        if playerMove == 'white':
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move down is', moveDown)
+
+                                if board[row][col+countR].hits(targetX, targetY):
+                                    moveR = False
+                                    
+
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move down is', moveDown, 'black check')
+
+                                if board[row][col+countR].hits(targetX, targetY):
+                                    moveR = False
+                                    nextR = True
+                                    print(blackPieces[i].name)
+
+                        elif playerMove == 'black':
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move down is', moveDown)
+
+                                if board[row][col+countR].hits(targetX, targetY):
+                                    moveR = False
+                                
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move down is', moveDown, 'white check')
+
+                                if board[row][col+countR].hits(targetX, targetY):
+                                    moveR = False
+                                    nextR = True
+                                    print(whitePieces[i].name)
+                    if moveR == True:
+                        addMoveMarker(row, col+countR)
+                    if nextR == True:
+                        addMoveMarker(row, col+countR)
+                    countR += 1
+                    
+
+                countL = 1
+                while moveL == True:
+                    if col-countL == -1:
+                        moveL = False
+
+                    if moveL == True:
+                        if playerMove == 'white':
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move down is', moveDown)
+
+                                if board[row][col-countL].hits(targetX, targetY):
+                                    moveL = False
+
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move down is', moveDown, 'black check')
+
+                                if board[row][col-countL].hits(targetX, targetY):
+                                    moveL = False
+                                    nextL = True
+                                    print(blackPieces[i].name)
+
+                        elif playerMove == 'black':
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move down is', moveDown)
+
+                                if board[row][col-countL].hits(targetX, targetY):
+                                    moveL = False
+                                
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move down is', moveDown, 'white check')
+
+                                if board[row][col-countL].hits(targetX, targetY):
+                                    moveL = False
+                                    nextL = True
+                                    print(whitePieces[i].name)
+                    if moveL == True:
+                        addMoveMarker(row, col-countL)
+                    if nextL == True:
+                        addMoveMarker(row, col-countL)
+                    countL += 1
+                    
+def checkBishopMoves(playerMove, x, y):
+    print('checking bishop moves')
+    for row in range(app.rows):
+        for col in range(app.cols):
+            if board[row][col].hits(x, y):
+                vert = board[row][col].vert
+                horiz = board[row][col].horiz
+
+                print('position:', vert, horiz)
+
+                moveUpL = True
+                nextUpL = False
+                moveUpR = True
+                nextUpR = False
+                moveDownL = True
+                nextDownL = False
+                moveDownR = True
+                nextDownR = False
+
+                if vert == '8':
+                    moveUpL = False
+                    moveUpR = False
+                elif vert == '1':
+                    moveDownL = False
+                    moveDownR = False
+
+                if horiz == 'H':
+                    moveUpR = False
+                    moveDownR = False
+                elif horiz == 'A':
+                    moveUpL = False
+                    moveDownL = False
+
+                countUpL = 1
+                while moveUpL == True:
+                    if col-countUpL == -1:
+                        moveUpL = False
+                    elif row-countUpL == -1:
+                        moveUpL = False
+                    
+                    if moveUpL == True:
+                        if playerMove == 'white':
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move up is', moveUp)
+
+                                if board[row-countUpL][col-countUpL].hits(targetX, targetY):
+                                    moveUpL = False
+                                    # print('move up disabled because of hit white piece')
+
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move up is', moveUp, 'black check')
+
+                                if board[row-countUpL][col-countUpL].hits(targetX, targetY):
+                                    moveUpL = False
+                                    nextUpL = True
+                                    # print('move up disabled because of hit black Piece')
+                                    print(blackPieces[i].name)
+
+                        elif playerMove == 'black':
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move up is', moveUp)
+
+                                if board[row-countUpL][col-countUpL].hits(targetX, targetY):
+                                    moveUpL = False
+                                    # print('move up disabled because of hit white piece')
+
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move up is', moveUp, 'white check')
+
+                                if board[row-countUpL][col-countUpL].hits(targetX, targetY):
+                                    moveUpL = False
+                                    nextUpL = True
+                                    # print('move up disabled because of hit black Piece')
+                                    print(whitePieces[i].name)
+                    if moveUpL == True:
+                        addMoveMarker(row-countUpL, col-countUpL)
+                    elif nextUpL == True:
+                        addMoveMarker(row-countUpL, col-countUpL)
+                    countUpL += 1
+                
+                countUpR = 1
+                while moveUpR == True:
+                    if col+countUpR == 8:
+                        moveUpR = False
+                    elif row-countUpR == -1:
+                        moveUpR = False
+                    
+                    if moveUpR == True:
+                        if playerMove == 'white':
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move up is', moveUp)
+
+                                if board[row-countUpR][col+countUpR].hits(targetX, targetY):
+                                    moveUpR = False
+                                    # print('move up disabled because of hit white piece')
+
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move up is', moveUp, 'black check')
+
+                                if board[row-countUpR][col+countUpR].hits(targetX, targetY):
+                                    moveUpR = False
+                                    nextUpR = True
+                                    # print('move up disabled because of hit black Piece')
+                                    print(blackPieces[i].name)
+
+                        elif playerMove == 'black':
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move up is', moveUp)
+
+                                if board[row-countUpR][col+countUpR].hits(targetX, targetY):
+                                    moveUpR = False
+                                    # print('move up disabled because of hit white piece')
+
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move up is', moveUp, 'white check')
+
+                                if board[row-countUpR][col+countUpR].hits(targetX, targetY):
+                                    moveUpR = False
+                                    nextUpR = True
+                                    # print('move up disabled because of hit black Piece')
+                                    print(whitePieces[i].name)
+                    if moveUpR == True:
+                        addMoveMarker(row-countUpR, col+countUpR)
+                    elif nextUpR == True:
+                        addMoveMarker(row-countUpR, col+countUpR)
+                    countUpR += 1
+
+                countDownL = 1
+                while moveDownL == True:
+                    if col-countDownL == -1:
+                        moveDownL = False
+                    elif row+countDownL == 8:
+                        moveDownL = False
+                    
+                    if moveDownL == True:
+                        if playerMove == 'white':
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move up is', moveUp)
+
+                                if board[row+countDownL][col-countDownL].hits(targetX, targetY):
+                                    moveDownL = False
+                                    # print('move up disabled because of hit white piece')
+
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move up is', moveUp, 'black check')
+
+                                if board[row+countDownL][col-countDownL].hits(targetX, targetY):
+                                    moveDownL = False
+                                    nextDownL = True
+                                    # print('move up disabled because of hit black Piece')
+                                    print(blackPieces[i].name)
+
+                        elif playerMove == 'black':
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move up is', moveUp)
+
+                                if board[row+countDownL][col-countDownL].hits(targetX, targetY):
+                                    moveDownL = False
+                                    # print('move up disabled because of hit white piece')
+
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move up is', moveUp, 'white check')
+
+                                if board[row+countDownL][col-countDownL].hits(targetX, targetY):
+                                    moveDownL = False
+                                    nextDownL = True
+                                    # print('move up disabled because of hit black Piece')
+                                    print(whitePieces[i].name)
+                    if moveDownL == True:
+                        addMoveMarker(row+countDownL, col-countDownL)
+                    elif nextDownL == True:
+                        addMoveMarker(row+countDownL, col-countDownL)
+                    countDownL += 1
+                    
+                countDownR = 1
+                while moveDownR == True:
+                    if col+countDownR == 8:
+                        moveDownR = False
+                    elif row+countDownR == 8:
+                        moveDownR = False
+                    
+                    if moveDownR == True:
+                        if playerMove == 'white':
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move up is', moveUp)
+
+                                if board[row+countDownR][col+countDownR].hits(targetX, targetY):
+                                    moveDownR = False
+                                    # print('move up disabled because of hit white piece')
+
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move up is', moveUp, 'black check')
+
+                                if board[row+countDownR][col+countDownR].hits(targetX, targetY):
+                                    moveDownR = False
+                                    nextDownR = True
+                                    # print('move up disabled because of hit black Piece')
+                                    print(blackPieces[i].name)
+
+                        elif playerMove == 'black':
+                            for i in range(len(blackPieces)):
+                                targetX = blackPieces[i].centerX
+                                targetY = blackPieces[i].centerY
+
+                                # print('move up is', moveUp)
+
+                                if board[row+countDownR][col+countDownR].hits(targetX, targetY):
+                                    moveDownR = False
+                                    # print('move up disabled because of hit white piece')
+
+                            for i in range(len(whitePieces)):
+                                targetX = whitePieces[i].centerX
+                                targetY = whitePieces[i].centerY
+
+                                # print('move up is', moveUp, 'white check')
+
+                                if board[row+countDownR][col+countDownR].hits(targetX, targetY):
+                                    moveDownR = False
+                                    nextDownR = True
+                                    # print('move up disabled because of hit black Piece')
+                                    print(whitePieces[i].name)
+                    if moveDownR == True:
+                        addMoveMarker(row+countDownR, col+countDownR)
+                    elif nextDownR == True:
+                        addMoveMarker(row+countDownR, col+countDownR)
+                    countDownR += 1
+
+def checkKingMoves(playerMove, x, y):
+    for row in range(app.rows):
+        for col in range(app.cols):
+            if board[row][col].hits(x, y):
+                vert = board[row][col].vert
+                horiz = board[row][col].horiz
+                print('position:', vert, horiz)
+
+                moveUpL = True
+                UpLX = x-40
+                UpLY = y-40
+
+                moveUp = True
+                UpX = x
+                UpY = y-40
+
+                moveUpR = True
+                UpRX = x+40
+                UpRY = y-40
+
+                moveR = True
+                RX = x+40
+                RY = y
+
+                moveDownR = True
+                DownRX = x+40
+                DownRY = y+40
+
+                moveDown = True
+                DownX = x
+                DownY = y+40
+
+                moveDownL = True
+                DownLX = x-40
+                DownLY = y+40
+
+                moveL = True
+                LX = x-40
+                LY = y
 
                 if playerMove == 'white':
-                    count = 1
-                    # while moveUp == True:
-                    # for j in range(8):
-                    #     print(count)
-                        
-                    #     for i in range(len(whitePieces)):
-                    #         targetX = whitePieces[i].centerX
-                    #         targetY = whitePieces[i].centerY
+                    for i in range(len(whitePieces)):
+                        if moveUpL == True:
+                            if whitePieces[i].hits(UpLX, UpLY):
+                                moveUpL = False
 
-                    #         print('move up is', moveUp)
+                        if moveUp == True:
+                            if whitePieces[i].hits(UpX, UpY):
+                                moveUp = False
 
-                    #         if board[row-count][col].hits(targetX, targetY):
-                    #             moveUp = False
-                    #             print('move up disabled because of hit white piece')
-                    #         elif board[row-count][col].centerY < 60:
-                    #             moveUp = False
-                    #             print('move up disabled because of board boundaries')
-                    #         else:
-                    #             addMoveMarker(row-count, col)
-                    #             print('added marker at', row-count, col)
-                    #         if moveUp == False:
-                    #             break
-                    #     count += 1
-                    # for x in range
+                        if moveUpR == True:
+                            if whitePieces[i].hits(UpRX, UpRY):
+                                moveUpR = False
 
-                    
+                        if moveR == True:
+                            if whitePieces[i].hits(RX, RY):
+                                moveR = False
+
+                        if moveDownR == True:
+                            if whitePieces[i].hits(DownRX, DownRY):
+                                moveDownR = False
+
+                        if moveDown == True:
+                            if whitePieces[i].hits(DownX, DownY):
+                                moveDown = False
+
+                        if moveDownL == True:
+                            if whitePieces[i].hits(DownLX, DownLY):
+                                moveDownL = False
+
+                        if moveL == True:
+                            if whitePieces[i].hits(LX, LY):
+                                moveL = False
+
+                elif playerMove == 'black':
+                    for i in range(len(blackPieces)):
+                        if moveUpL == True:
+                            if blackPieces[i].hits(UpLX, UpLY):
+                                moveUpL = False
+
+                        if moveUp == True:
+                            if blackPieces[i].hits(UpX, UpY):
+                                moveUp = False
+
+                        if moveUpR == True:
+                            if blackPieces[i].hits(UpRX, UpRY):
+                                moveUpR = False
+
+                        if moveR == True:
+                            if blackPieces[i].hits(RX, RY):
+                                moveR = False
+
+                        if moveDownR == True:
+                            if blackPieces[i].hits(DownRX, DownRY):
+                                moveDownR = False
+
+                        if moveDown == True:
+                            if blackPieces[i].hits(DownX, DownY):
+                                moveDown = False
+
+                        if moveDownL == True:
+                            if blackPieces[i].hits(DownLX, DownLY):
+                                moveDownL = False
+
+                        if moveL == True:
+                            if blackPieces[i].hits(LX, LY):
+                                moveL = False
+
+                if vert == '1':
+                    moveDownR = False
+                    moveDown = False
+                    moveDownL = False
+                elif vert == '8':
+                    moveUpR = False
+                    moveUp = False
+                    moveUpL = False
+
+                if horiz == 'H':
+                    moveUpR = False
+                    moveR = False
+                    moveDownR = False
+                elif horiz == 'A':
+                    moveUpL = False
+                    moveL = False
+                    moveDownL = False
+
+                if moveUpL == True:
+                    addMoveMarker(row-1, col-1)
+
+                if moveUp == True:
+                    addMoveMarker(row-1, col)
+                
+                if moveUpR == True:
+                    addMoveMarker(row-1, col+1)
+
+                if moveR == True:
+                    addMoveMarker(row, col+1)
+
+                if moveDownR == True:
+                    addMoveMarker(row+1, col+1)
+                
+                if moveDown == True:
+                    addMoveMarker(row+1, col)
+
+                if moveDownL == True:
+                    addMoveMarker(row+1, col-1)
+
+                if moveL == True:
+                    addMoveMarker(row, col-1)
+ 
+def checkWhiteRocked():
+    if app.whiteRookLStart == True:
+        lRocked = True
+        for i in range(len(whitePieces)):
+            if whitePieces[i].hits(180, 340) or whitePieces[i].hits(140, 340) or whitePieces[i].hits(100, 340):
+                lRocked = False
+        if lRocked == True:
+            for i in range(len(blackPieces)):
+                if blackPieces[i].hits(180, 340) or blackPieces[i].hits(140, 340) or blackPieces[i].hits(100, 340):
+                    lRocked = False
+        if lRocked == True:
+            addMoveMarker(7, 2)
+
+    if app.whiteRookRStart == True:
+        rRocked = True
+        for i in range(len(whitePieces)):
+            if whitePieces[i].hits(260, 340) or whitePieces[i].hits(300, 340):
+                rRocked = False
+        if rRocked == True:
+            for i in range(len(blackPieces)):
+                if blackPieces[i].hits(260, 340) or blackPieces[i].hits(300, 340):
+                    rRocked = False
+        if rRocked == True:
+            addMoveMarker(7, 6)
+        
+def checkBlackRocked():
+    if app.blackRookLStart == True:
+        lRocked = True
+        for i in range(len(whitePieces)):
+            if whitePieces[i].hits(180, 60) or whitePieces[i].hits(140, 60) or whitePieces[i].hits(100, 60):
+                lRocked = False
+        if lRocked == True:
+            for i in range(len(blackPieces)):
+                if blackPieces[i].hits(180, 60) or blackPieces[i].hits(140, 60) or blackPieces[i].hits(100, 60):
+                    lRocked = False
+        if lRocked == True:
+            addMoveMarker(0, 2)
+
+    if app.blackRookRStart == True:
+        rRocked = True
+        for i in range(len(whitePieces)):
+            if whitePieces[i].hits(260, 60) or whitePieces[i].hits(300, 60):
+                rRocked = False
+        if rRocked == True:
+            for i in range(len(blackPieces)):
+                if blackPieces[i].hits(260, 60) or blackPieces[i].hits(300, 60):
+                    rRocked = False
+        if rRocked == True:
+            addMoveMarker(0, 6)
 
 def addMoveMarker(row, col):
     moveMarkers.add(Circle(board[row][col].centerX, board[row][col].centerY, 15, fill = 'red', opacity = 50))
@@ -771,31 +1454,60 @@ def movePiece(targetX, targetY):
     return pos
 
 def newTurn():
-    print('newTurn is called and next player is', app.playerMove)
     if app.playerMove == 'white':
-        print('app.playerMove is white')
+        print('app.playerMove was white')
         app.playerMove = 'black'
     elif app.playerMove == 'black':
-        print('app.playerMove is black')
-        app.playerMove = 'white'                    
+        print('app.playerMove was black')
+        app.playerMove = 'white'           
+    print('newTurn was called and next player is', app.playerMove)         
 
-def posPiece(pos):
+def posPiece(pos, oldPos):
     app.piece.centerX = pos[0]
     app.piece.centerY = pos[1]
+    
+    dx = pos[0]-oldPos[0]
+    dy = pos[1]-oldPos[1]
+
+    print(dx, dy)
+
     if app.playerMove == 'white':
         if app.whiteLastMove[0] == 'White Pawn' and (app.whiteLastMove[1] == 'FrontLeft' or app.whiteLastMove[1] == 'FrontRight'):
             passantWipe()
+        elif app.whiteLastMove[0] == 'White Rook':
+            if oldPos[0] == 60:
+                app.whiteRookLStart = False
+            elif oldPos[0] == 340:
+                app.whiteRookRStart = False
+        elif app.whiteLastMove[0] == 'White King':
+            app.whiteKingStart = False
+            if dx == 80:
+                posRocked('right', app.playerMove)
+            elif dx == -80:
+                posRocked('left', app.playerMove)
+
     elif app.playerMove == 'black':
         if app.blackLastMove[0] == 'Black Pawn' and (app.blackLastMove[1] == 'FrontLeft' or app.blackLastMove[1] == 'FrontRight'):
             passantWipe()
-
+        elif app.blackLastMove[0] == 'Black Rook':
+            if oldPos[0] == 60:
+                app.blackRookLStart = False
+            elif oldPos[0] == 340:
+                app.blackRookRStart = False
+        elif app.blackLastMove[0] == 'Black King':
+            app.blackKingStart = False
+            if dx == 80:
+                posRocked('right', app.playerMove)
+            elif dx == -80:
+                posRocked('left', app.playerMove)
+            
 def passantWipe():
     if app.playerMove == 'white':
         x = app.whiteLastMove[2]
         y = app.whiteLastMove[3] + 40
         listLen = len(blackPieces)
         for i in range(len(blackPieces)):
-            print(i)
+            # print(i)
             if len(blackPieces) == listLen:
                 if blackPieces[i].hits(x, y):
                     print(blackPieces[i].name)
@@ -806,18 +1518,39 @@ def passantWipe():
         y = app.blackLastMove[3] - 40
         listLen = len(whitePieces)
         for i in range(len(whitePieces)):
-            print(i)
+            # print(i)
             if len(whitePieces) == listLen:
                 if whitePieces[i].hits(x, y):
                     print(whitePieces[i].name)
                     delPiece = whitePieces.pop(i)
                     delPiece.visible = False
 
+def posRocked(dir, playerMove):
+    if playerMove == 'white':
+        if dir == 'right':
+            for i in range(len(whiteRooks)):
+                if whiteRooks[i].hits(340, 340):
+                    whiteRooks[i].centerX = 260
+        elif dir == 'left':
+            for i in range(len(whiteRooks)):
+                if whiteRooks[i].hits(60, 340):
+                    whiteRooks[i].centerX = 180
+    
+    elif playerMove == 'black':
+        if dir == 'right':
+            for i in range(len(blackRooks)):
+                if blackRooks[i].hits(340, 60):
+                    blackRooks[i].centerX = 260
+        elif dir == 'left':
+            for i in range(len(blackRooks)):
+                if blackRooks[i].hits(60, 60):
+                    blackRooks[i].centerX = 180
+
 def wipePiece():
     if app.playerMove == 'white':
         listLen = len(blackPieces)
         for i in range(len(blackPieces)):
-            print(i)
+            # print(i)
             if len(blackPieces) == listLen:
                 if app.piece.hitsShape(blackPieces[i]):
                     print(blackPieces[i].name)
@@ -828,7 +1561,7 @@ def wipePiece():
     elif app.playerMove == 'black':
         listLen = len(whitePieces)
         for i in range(len(whitePieces)):
-            print(i)
+            # print(i)
             if len(whitePieces) == listLen:
                 if app.piece.hitsShape(whitePieces[i]):
                     print(whitePieces[i].name)
@@ -854,7 +1587,18 @@ def getLastMove(piece, oldX, oldY, newX, newY):
             moveType = 'KnightMove'
         elif piece.name == 'White Rook':
             moveType = 'RookMove'
-    if app.playerMove == 'black':
+        elif piece.name == 'White Bishop':
+            moveType = 'BishopMove'
+        elif piece.name == 'White Queen':
+            moveType = 'QueenMove'
+        elif piece.name == 'White King':
+            if dx == -80:
+                moveType = 'LeftRocked'
+            elif dx == 80:
+                moveType = 'RightRocked'
+            else:
+                moveType = 'KingMove'
+    elif app.playerMove == 'black':
         if piece.name == 'Black Pawn':
             if dy == 80:
                 moveType = 'TwoFront'
@@ -868,12 +1612,91 @@ def getLastMove(piece, oldX, oldY, newX, newY):
             moveType = 'KnightMove'
         elif piece.name == 'Black Rook':
             moveType = 'RookMove'
+        elif piece.name == 'Black Bishop':
+            moveType = 'BishopMove'
+        elif piece.name == 'Black Queen':
+            moveType = 'QueenMove'
+        elif piece.name == 'Black King':
+            if dx == -80:
+                moveType = 'LeftRocked'
+            elif dx == 80:
+                moveType = 'RightRocked'
+            else:
+                moveType = 'KingMove'
     lastMove.append(moveType)
     lastMove.append(newX)
     lastMove.append(newY)
-    print('y diff was', dy)
-    print('last move was', lastMove)
+    # print('y diff was', dy)
+    # print('last move was', lastMove)
     return lastMove
+
+def checkKingThreat(playerMove, pieceX, pieceY, kingX, kingY):
+    isSafe = False
+    hitWhite = False
+    hitBlack = False
+    whitePos = [None, None]
+    blackPos = [None, None]
+
+    if playerMove == 'white':
+        ### checking threat posibilities if king was not moved
+        if app.whiteLastMove[0] != 'White King':
+            print('do stuff')
+            angle = angleTo(pieceX, pieceY, kingX, kingY)
+            print(angle)
+            ### Check angles related to bishops and queens
+            if angle == 45:
+                print('checking down left')
+
+            elif angle == 135:
+                print('checking up left')
+                for i in range(7):
+                    x = kingX - 40 * (i + 1)
+                    y = kingY - 40 * (i + 1)
+                    if x > 60 and y > 60:
+                        if x != pieceX and hitWhite == False:
+                            for j in range(len(whitePieces)):
+                                if whitePieces[j].hits(x, y):
+                                    hitWhite = True
+                                    whitePos[0] = x
+                                    whitePos[1] = y
+                        if x != pieceX and hitBlack == False:
+                            for j in range(len(blackPieces)):
+                                if blackPieces[j].hits(x, y):
+                                    hitBlack = True
+                                    blackPos[0] = x
+                                    blackPos[1] = y
+                    if x <= 60 or y <= 60:
+                        break
+                
+                print('white x:', whitePos[0])
+                print('black x:', blackPos[0])
+
+                if whitePos[0] != None and blackPos[0] != None:
+                    if whitePos[0] > blackPos[0]:
+                        if isSafe == False:
+                            isSafe = True
+
+                if blackPos[0] == None:
+                    isSafe = True
+
+                
+
+                if isSafe == False:
+                    print('not a safe move')
+
+            elif angle == 225:
+                print('checking up right')
+
+            elif angle == 315:
+                print('checking donw right')
+
+            ### check angles related to rooks and queens
+
+    
+    elif playerMove == 'black':
+        if app.blackLastMove[0] != 'Black King':
+            print('do other stuff')
+
 
 app.phase = 1
 app.piece = None
@@ -881,9 +1704,17 @@ app.playerMove = 'white'
 app.whiteLastMove = [None, None, None, None]
 app.blackLastMove = [None, None, None, None]
 
+app.whiteKingStart = True
+app.blackKingStart = True
+
+app.whiteRookLStart = True
+app.whiteRookRStart = True
+
+app.blackRookLStart = True
+app.blackRookRStart = True
 
 def onMousePress(mouseX, mouseY):
-    print(app.playerMove)
+    # print(app.playerMove)
     ### Selects piece
     if app.phase == 1:
         piece = selectPiece(app.playerMove, mouseX, mouseY)
@@ -901,19 +1732,45 @@ def onMousePress(mouseX, mouseY):
                 checkRookMoves(app.playerMove, piece.centerX, piece.centerY)
                 app.piece = piece
                 app.phase = 2
+            elif piece.name == 'White Bishop' or piece.name == 'Black Bishop':
+                checkBishopMoves(app.playerMove, piece.centerX, piece.centerY)
+                app.piece = piece
+                app.phase = 2
+            elif piece.name == 'White Queen' or piece.name == 'Black Queen':
+                checkRookMoves(app.playerMove, piece.centerX, piece.centerY)
+                checkBishopMoves(app.playerMove, piece.centerX, piece.centerY)
+                app.piece = piece
+                app.phase = 2
+            elif piece.name == 'White King' or piece.name == 'Black King':
+                checkKingMoves(app.playerMove, piece.centerX, piece.centerY)
+                if app.playerMove == 'white' and app.whiteKingStart:
+                    checkWhiteRocked()
+                elif app.playerMove == 'black' and app.blackKingStart:
+                    checkBlackRocked()
+                app.piece = piece
+                app.phase = 2
 
     elif app.phase == 2:
         if moveMarkers != None:
             oldPos = [app.piece.centerX, app.piece.centerY]
             pos = movePiece(mouseX, mouseY)
-            if app.playerMove == 'white':
-                app.whiteLastMove = getLastMove(app.piece, oldPos[0], oldPos[1], pos[0], pos[1])
-            elif app.playerMove == 'black':
-                app.blackLastMove = getLastMove(app.piece, oldPos[0], oldPos[1], pos[0], pos[1])
-            print(pos)
             if pos != None:
+                if app.playerMove == 'white':
 
-                posPiece(pos)
+                    # print(app.piece, oldPos, pos)
+                    app.whiteLastMove = getLastMove(app.piece, oldPos[0], oldPos[1], pos[0], pos[1])
+                    checkKingThreat(app.playerMove, oldPos[0], oldPos[1], whitePieces[0].centerX, whitePieces[0].centerY)
+
+                elif app.playerMove == 'black':
+
+                    app.blackLastMove = getLastMove(app.piece, oldPos[0], oldPos[1], pos[0], pos[1])
+                    checkKingThreat(app.playerMove, oldPos[0], oldPos[1], blackPieces[0].centerX, blackPieces[0].centerY)
+
+            # print(pos)
+            # if pos != None:
+
+
+                posPiece(pos, oldPos)
 
                 wipePiece()
                 
@@ -926,18 +1783,73 @@ def onMousePress(mouseX, mouseY):
 ### Test
 
 ### Test Rook
+# onMousePress(60, 300)
+# onMousePress(60, 220)
 
-onMousePress(60, 300)
-onMousePress(60, 220)
+# onMousePress(180, 100)
+# onMousePress(180, 140)
+
+# onMousePress(60, 220)
+# onMousePress(60, 180)
+
+# onMousePress(100, 100)
+# onMousePress(100, 180)
+
+# onMousePress(60, 180)
+# onMousePress(100, 140)
+
+# onMousePress(340, 100)
+# onMousePress(340, 140)
+
+
+### Test king
+onMousePress(220, 300)
+onMousePress(220, 220)
+
+onMousePress(220, 100)
+onMousePress(220, 180)
+
+onMousePress(180, 340)
+onMousePress(300, 220)
+
+onMousePress(180, 60)
+onMousePress(300, 180)
+
+onMousePress(260, 340)
+onMousePress(140, 220)
+
+onMousePress(260, 60)
+onMousePress(140, 180)
+
+onMousePress(180, 300)
+onMousePress(180, 220)
+
 onMousePress(180, 100)
-onMousePress(180, 140)
-onMousePress(60, 220)
-onMousePress(60, 180)
-onMousePress(100, 100)
-onMousePress(100, 180)
-onMousePress(60, 180)
-onMousePress(100, 140)
-onMousePress(340, 100)
+onMousePress(180, 180)
+
+onMousePress(260, 300)
+onMousePress(260, 220)
+
+onMousePress(260, 100)
+onMousePress(260, 180)
+
+onMousePress(140, 340)
+onMousePress(220, 260)
+
+onMousePress(140, 60)
+onMousePress(220, 140)
+
+onMousePress(100, 340)
+onMousePress(60, 260)
+
+onMousePress(100, 60)
+onMousePress(60, 140)
+
+onMousePress(300, 340)
+onMousePress(340, 260)
+
+onMousePress(300, 60)
 onMousePress(340, 140)
+# Rect(40, 40, 40, 40, opacity = 1)
 
 cmu_graphics.run()
