@@ -1,6 +1,8 @@
 from calendar import TUESDAY
 from http.client import UNPROCESSABLE_ENTITY
 from pickle import FALSE
+from types import TracebackType
+from urllib.parse import non_hierarchical
 from cmu_graphics import *
 
 app.rows = 8
@@ -1630,73 +1632,451 @@ def getLastMove(piece, oldX, oldY, newX, newY):
     # print('last move was', lastMove)
     return lastMove
 
-def checkKingThreat(playerMove, pieceX, pieceY, kingX, kingY):
-    isSafe = False
+def checkKingThreat(playerMove, oldPieceX, oldPieceY, newPieceX, newPieceY, kingX, kingY):
+    isSafe = True
     hitWhite = False
     hitBlack = False
     whitePos = [None, None]
     blackPos = [None, None]
 
+    lastMoveIsKing = False
+
     if playerMove == 'white':
-        ### checking threat posibilities if king was not moved
-        if app.whiteLastMove[0] != 'White King':
-            print('do stuff')
-            angle = angleTo(pieceX, pieceY, kingX, kingY)
-            print(angle)
-            ### Check angles related to bishops and queens
-            if angle == 45:
-                print('checking down left')
+        if app.whiteLastMove[0] == 'White King':
+            lastMoveIsKing = True
+        
+    elif playerMove == 'black':
+        if app.blackLastMove[0] == 'Black King':
+            lastMoveIsKing = True
 
-            elif angle == 135:
-                print('checking up left')
-                for i in range(7):
-                    x = kingX - 40 * (i + 1)
-                    y = kingY - 40 * (i + 1)
-                    if x > 60 and y > 60:
-                        if x != pieceX and hitWhite == False:
-                            for j in range(len(whitePieces)):
-                                if whitePieces[j].hits(x, y):
-                                    hitWhite = True
-                                    whitePos[0] = x
-                                    whitePos[1] = y
-                        if x != pieceX and hitBlack == False:
-                            for j in range(len(blackPieces)):
-                                if blackPieces[j].hits(x, y):
-                                    hitBlack = True
-                                    blackPos[0] = x
-                                    blackPos[1] = y
-                    if x <= 60 or y <= 60:
-                        break
-                
-                print('white x:', whitePos[0])
-                print('black x:', blackPos[0])
+    if lastMoveIsKing == False:
+        # print('do stuff')
+        angle = angleTo(oldPieceX, oldPieceY, kingX, kingY)
+        print(angle)
+        ### Check angles related to bishops and queens
+        if isSafe == True and (angle == 45 or angle == 135 or angle == 225 or angle == 315):
+            isSafe = threatCheckDiagonal(playerMove, angle, oldPieceX, oldPieceY, newPieceX, newPieceY, kingX, kingY)
+        
+        if isSafe == True and (angle == 0 or angle == 90 or angle == 180 or angle == 270):
+            isSafe = threatCheckVertHoriz(playerMove, angle, oldPieceX, oldPieceY, newPieceX, newPieceY, kingX, kingY)
 
-                if whitePos[0] != None and blackPos[0] != None:
-                    if whitePos[0] > blackPos[0]:
-                        if isSafe == False:
-                            isSafe = True
-
-                if blackPos[0] == None:
-                    isSafe = True
-
-                
-
+        if isSafe == True:
+            print('--------angle didnt match, trying diagonal')
+            for i in range(4):
+                tempAngle = 45 + 90 * i
+                isSafe = threatCheckDiagonal(playerMove, tempAngle, oldPieceX, oldPieceY, newPieceX, newPieceY, kingX, kingY)
                 if isSafe == False:
-                    print('not a safe move')
+                    break
+        
+        if isSafe == True:
+            print('--------angle didnt match, trying vert horiz')
+            for i in range(4):
+                tempAngle = 90 * i
+                isSafe = threatCheckVertHoriz(playerMove, tempAngle, oldPieceX, oldPieceY, newPieceX, newPieceY, kingX, kingY)
+                if isSafe == False:
+                    break
 
-            elif angle == 225:
-                print('checking up right')
+    elif lastMoveIsKing == True:
+        print('-------- King was moved')
+        if isSafe == True:
+            print('-------- checking diagonal')
+            for i in range(4):
+                angle = 90 * i
+                print('checking', angle)
+                isSafe = threatCheckVertHoriz(playerMove, angle, oldPieceX, oldPieceY, newPieceX, newPieceY, kingX, kingY)
+                if isSafe == False:
+                    break
+        
+        if isSafe == True:
+            print('-------- checking vert horiz')
+            for i in range(4):
+                angle = 45 + 90 * i
+                print('checking', angle)
+                isSafe = threatCheckDiagonal(playerMove, angle, oldPieceX, oldPieceY, newPieceX, newPieceY, kingX, kingY)
+                if isSafe == False:
+                    break
 
-            elif angle == 315:
-                print('checking donw right')
+    return isSafe
 
-            ### check angles related to rooks and queens
+def threatCheckDiagonal(playerMove, angle, oldPieceX, oldPieceY, newPieceX, newPieceY, kingX, kingY):
+    isSafe = True
+    whitePos = [None, None]
+    blackPos = [None, None]
+    hitWhite = False
+    hitBlack = False
+    
+    # if playerMove == 'white':
+        # if angle == 135:
+    print('checking up left')
+    for i in range(7):
+        x = threatGetX(kingX, i, angle)
+        y = threatGetY(kingY, i, angle)
+        if x > 60 and y > 60 and x < 340 and y < 340:
+            if playerMove == 'white':
+                for j in range(len(whitePieces)):
+                    if x != oldPieceX and hitWhite == False:
+                        if whitePieces[j].hits(x, y):
+                            print('hit white piece not old x')
+                            hitWhite = True
+                            whitePos[0] = x
+                            whitePos[1] = y
+
+                if x == oldPieceX and y == oldPieceY:
+                    print('checked the old pieceX')
+
+                if newPieceX == x and newPieceY == y:
+                    print('piece was hit after move')
+                    
+                    hitWhite = True
+                    whitePos[0] = x
+                    whitePos[1] = y
+
+                for j in range(len(blackPieces)):
+                    if x != oldPieceX and hitBlack == False:
+                        if blackPieces[j].hits(x, y):
+                            hitBlack = True
+                            blackPos[0] = x
+                            blackPos[1] = y
+
+            elif playerMove == 'black':
+                for j in range(len(blackPieces)):
+                    if x != oldPieceX and hitBlack == False:
+                        if blackPieces[j].hits(x, y):
+                            print('hit black piece not old x')
+                            hitBlack = True
+                            blackPos[0] = x
+                            blackPos[1] = y
+
+                if x == oldPieceX and y == oldPieceY:
+                    print('checked the old pieceX')
+                    # hitBlack = True
+                    ### maybe hitblack is true and set black x?
+                if newPieceX == x and newPieceY == y:
+                    print('piece was hit after move')
+
+                    hitBlack = True
+                    blackPos[0] = x
+                    blackPos[1] = y
+
+                for j in range(len(whitePieces)):
+                    if x != oldPieceX and hitWhite == False:
+                        if whitePieces[j].hits(x, y):
+                            hitWhite = True
+                            whitePos[0] = x
+                            whitePos[1] = y
+
+                
+
+        if x <= 60 or y <= 60 or x >= 340 or y >= 340:
+            break
+    
+    print('white x:', whitePos[0])
+    print('black x:', blackPos[0])
+
+    if whitePos[0] != None and blackPos[0] != None:
+        if playerMove == 'white':
+            if angle == 135 or angle == 45:
+                if whitePos[0] > blackPos[0]:
+                    if isSafe == False:
+                        isSafe = True
+                        print('safe is true due to white > black')
+            elif angle == 225 or angle == 315:
+                if whitePos[0] < blackPos[0]:
+                    if isSafe == False:
+                        isSafe = True
+                        print('safe true due to white < black')
+                    
+        elif playerMove == 'black':
+            if angle == 135 or angle == 45:
+                if blackPos[0] > whitePos[0]:
+                    if isSafe == False:
+                        isSafe = True
+                        print('safe true due to black > white')
+
+            elif angle == 225 or angle == 315:
+                if blackPos[0] < whitePos[0]:
+                    if isSafe == False:
+                        isSafe = True
+                        print('safe true due to black < white')
+
+    if playerMove == 'white':
+        if blackPos[0] == None:
+            isSafe = True
+            print('safe is true due to no black in los')
+
+        elif whitePos[0] == None:
+            isSafe = False
+            print('safe false due to black pos existing but no white pos')
+
+        if isSafe == False:
+            if blackPos[0] != None:
+                isSafe = True
+                print('safe set to true preparing for checking bishop and queen')
+                for i in range(len(blackBishops)):
+                    if blackBishops[i].hits(blackPos[0], blackPos[1]):
+                        isSafe = False
+                        print('safe set to false due to bishop los')
+
+                
+                if blackQueen.hits(blackPos[0], blackPos[1]):
+                    isSafe = False
+                    print('safe set to false due to queen los')
+
+    elif playerMove == 'black':
+        if whitePos[0] == None:
+            isSafe = True
+            print('safe is true due to no white in los')
+        
+        elif blackPos[0] == None:
+            isSafe = False
+            print('safe false due to white pos existing but no black pos')
+
+        if isSafe == False:
+            if whitePos[0] != None:
+                isSafe = True
+                print('safe set to true preparing for checking bishop and queen')
+                for i in range(len(whiteBishops)):
+                    if whiteBishops[i].hits(whitePos[0], whitePos[1]):
+                        isSafe = False
+                        print('safe set to false due to bishop los')
+
+                if whiteQueen.hits(whitePos[0], whitePos[1]):
+                    isSafe = False
+                    print('safe set to false due to queen los')
+
+    if isSafe == False:
+        print('not a safe move')
+    
+    elif isSafe == True:
+        print('safe move')
+
+    return isSafe
+
+def threatCheckVertHoriz(playerMove, angle, oldPieceX, oldPieceY, newPieceX, newPieceY, kingX, kingY):
+    isSafe = True
+    whitePos = [None, None]
+    blackPos = [None, None]
+    hitWhite = False
+    hitBlack = False
+
+    ### Do smth to check x when king is moved
+
+    print('king  x y vs new x y', kingX, kingY, newPieceX, newPieceY)
+    
+    # if playerMove == 'white':
+        # if angle == 135:
+    # print('checking up left')
+    print('checking', angle)
+    for i in range(7):
+        x = threatGetX(kingX, i, angle)
+        y = threatGetY(kingY, i, angle)
+        print('x y is:', x, y)
+        if x >= 60 and y >= 60 and x <= 340 and y <= 340:
+            if playerMove == 'white':
+                for j in range(len(whitePieces)):
+                    if hitWhite == False:
+                        if whitePieces[j].hits(x, y):
+                            print('hit white')
+                            hitWhite = True
+                            whitePos[0] = x
+                            whitePos[1] = y
+
+                if x == oldPieceX and y == oldPieceY:
+                    print('checked the old pieceX')
+
+                if newPieceX == x and newPieceY == y and hitWhite == False:
+                    
+                    print('moved piece was hit after move')
+                    
+                    hitWhite = True
+                    whitePos[0] = x
+                    whitePos[1] = y
+
+                for j in range(len(blackPieces)):
+                    # if x != oldPieceX and hitBlack == False:
+                    if hitBlack == False:
+                        if blackPieces[j].hits(x, y):
+                            print('hit black piece')
+                            hitBlack = True
+                            blackPos[0] = x
+                            blackPos[1] = y
+
+            elif playerMove == 'black':
+                for j in range(len(blackPieces)):
+                    if hitBlack == False:
+                        if blackPieces[j].hits(x, y):
+                            print('hit black piece not old x')
+                            hitBlack = True
+                            blackPos[0] = x
+                            blackPos[1] = y
+
+                if x == oldPieceX and y == oldPieceY:
+                    print('checked the old pieceX')
+                    # hitBlack = True
+                    ### maybe hitblack is true and set black x?
+                if newPieceX == x and newPieceY == y and hitBlack == False:
+                    print('moved piece was hit after move')
+
+                    hitBlack = True
+                    blackPos[0] = x
+                    blackPos[1] = y
+
+                for j in range(len(whitePieces)):
+                    # if x != oldPieceX and hitWhite == False:
+                    if hitWhite == False:
+                        if whitePieces[j].hits(x, y):
+                            hitWhite = True
+                            whitePos[0] = x
+                            whitePos[1] = y
+
+        if angle == 90 or angle == 270:
+            if x <= 60 or x >= 340:
+                break
+        elif angle == 0 or angle == 180:
+            if y <= 60 or y >= 340:
+                break
+    
+    print('white x:', whitePos[0])
+    print('black x:', blackPos[0])
+
+    if whitePos[0] != None and blackPos[0] != None:
+        isSafe = False
+        print('isSafe set to false to prepare for comparing pos')
+        # if playerMove == 'white':
+        if angle == 270:
+            if playerMove == 'white':
+                if whitePos[0] < blackPos[0]:
+                    if isSafe == False:
+                        isSafe = True
+                        print('safe is true due to whiteX > blackX')
+            elif playerMove == 'black':
+                if blackPos[0] < whitePos[0]:
+                    if isSafe == False:
+                        isSafe = True
+                        print('safe is true due to blackX > whitex')
+
+        elif angle == 90:
+            if playerMove == 'white':
+                if whitePos[0] > blackPos[0]:
+                    if isSafe == False:
+                        isSafe = True
+                        print('safe true due to whiteX < blackX')
+                
+            elif playerMove == 'black':
+                if blackPos[0] > whitePos[0]:
+                    if isSafe == False:
+                        isSafe = True
+                        print('safe true due to blackX < whiteX')
+                
+        elif angle == 180:
+            if playerMove == 'white':
+                if whitePos[1] > blackPos[1]:
+                    if isSafe == False:
+                        isSafe = True
+                        print('safe true due to whiteY < blackY')
+            elif playerMove == 'black':
+                if blackPos[1] > whitePos[1]:
+                    if isSafe == False:
+                        isSafe = True
+                        print('safe true due to blackY < whiteY')
+                    
+        elif angle == 0:
+            if playerMove == 'white':
+                if whitePos[1] < blackPos[1]:
+                    if isSafe == False:
+                        isSafe = True
+                        print('safe true due to whiteY > blackY')
+            elif playerMove == 'black':
+                if blackPos[1] < whitePos[1]:
+                    if isSafe == False:
+                        isSafe = True
+                        print('safe true due to blackY > whiteY')
+                    
+
+        if playerMove == 'white':
+            if whitePos == blackPos:
+                print('white took black and move is safe')
+                isSafe = True
+        
+        elif playerMove == 'black':
+            if whitePos == blackPos:
+                print('black took white and move is safe')
+                isSafe = True
+
+    if playerMove == 'white':
+        if blackPos[0] == None:
+            isSafe = True
+            print('safe is true due to no black in los')
+
+        elif whitePos[0] == None:
+            isSafe = False
+            print('safe false due to black pos existing but no white pos')
+
+        if isSafe == False:
+            if blackPos[0] != None:
+                isSafe = True
+                print('safe set to true preparing for checking rook and queen')
+                for i in range(len(blackRooks)):
+                    if blackRooks[i].hits(blackPos[0], blackPos[1]):
+                        isSafe = False
+                        print('safe set to false due to bishop los')
+
+                
+                if blackQueen.hits(blackPos[0], blackPos[1]):
+                    isSafe = False
+                    print('safe set to false due to queen los')
+
+    elif playerMove == 'black':
+        if whitePos[0] == None:
+            isSafe = True
+            print('safe is true due to no white in los')
+        
+        elif blackPos[0] == None:
+            isSafe = False
+            print('safe false due to white pos existing but no black pos')
+
+        if isSafe == False:
+            if whitePos[0] != None:
+                isSafe = True
+                print('safe set to true preparing for checking rook and queen')
+                for i in range(len(whiteRooks)):
+                    if whiteRooks[i].hits(whitePos[0], whitePos[1]):
+                        isSafe = False
+                        print('safe set to false due to bishop los')
+
+                if whiteQueen.hits(whitePos[0], whitePos[1]):
+                    isSafe = False
+                    print('safe set to false due to queen los')
+
+    if isSafe == False:
+        print('not a safe move')
+    
+    elif isSafe == True:
+        print('safe move')
+
+    return isSafe
+
+
+def threatGetX(kingX, i, angle):
+    if angle == 180 or angle == 0:
+        x = kingX
+    elif angle < 180:
+        x = kingX - 40 * (i + 1)
+    elif angle > 180:
+        x = kingX + 40 * (i + 1)
 
     
-    elif playerMove == 'black':
-        if app.blackLastMove[0] != 'Black King':
-            print('do other stuff')
+    return x
 
+def threatGetY(kingY, i, angle):
+    if angle == 90 or angle == 270:
+        y = kingY
+    elif angle > 90 and angle < 270:
+        y = kingY - 40 * (i + 1)
+
+    elif angle < 90 or angle > 270:
+        y = kingY + 40 * (i + 1)
+    return y
 
 app.phase = 1
 app.piece = None
@@ -1712,6 +2092,8 @@ app.whiteRookRStart = True
 
 app.blackRookLStart = True
 app.blackRookRStart = True
+
+app.legalMove = False
 
 def onMousePress(mouseX, mouseY):
     # print(app.playerMove)
@@ -1759,24 +2141,26 @@ def onMousePress(mouseX, mouseY):
 
                     # print(app.piece, oldPos, pos)
                     app.whiteLastMove = getLastMove(app.piece, oldPos[0], oldPos[1], pos[0], pos[1])
-                    checkKingThreat(app.playerMove, oldPos[0], oldPos[1], whitePieces[0].centerX, whitePieces[0].centerY)
+                    app.legalMove = checkKingThreat(app.playerMove, oldPos[0], oldPos[1], pos[0], pos[1], whitePieces[0].centerX, whitePieces[0].centerY)
 
                 elif app.playerMove == 'black':
 
                     app.blackLastMove = getLastMove(app.piece, oldPos[0], oldPos[1], pos[0], pos[1])
-                    checkKingThreat(app.playerMove, oldPos[0], oldPos[1], blackPieces[0].centerX, blackPieces[0].centerY)
+                    app.legalMove = checkKingThreat(app.playerMove, oldPos[0], oldPos[1], pos[0], pos[1], blackPieces[0].centerX, blackPieces[0].centerY)
 
             # print(pos)
             # if pos != None:
+                print('legalMove is', app.legalMove)
+                if app.legalMove == True:
+                    posPiece(pos, oldPos)
 
-
-                posPiece(pos, oldPos)
-
-                wipePiece()
+                    wipePiece()
                 
 
         selectedMarkers.clear()
         moveMarkers.clear()
+
+        # if appillegalMove == False:
         app.phase = 1
 
     
@@ -1850,6 +2234,25 @@ onMousePress(340, 260)
 
 onMousePress(300, 60)
 onMousePress(340, 140)
+
+onMousePress(220, 220)
+onMousePress(180, 180)
+
+onMousePress(220, 180)
+onMousePress(180, 220)
+
+onMousePress(220, 260)
+onMousePress(180, 220)
+
+onMousePress(300, 180)
+onMousePress(260, 220)
+
+onMousePress(180, 220)
+onMousePress(220, 260)
+
+onMousePress(260, 220)
+onMousePress(220, 220)
+
 # Rect(40, 40, 40, 40, opacity = 1)
 
 cmu_graphics.run()
