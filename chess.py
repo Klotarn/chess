@@ -2824,9 +2824,9 @@ def makeMove(move):
 
 ### Test pawn switching
 
-makeMove('h2-h4')
+# makeMove('h2-h4')
 
-makeMove('A7-a5')
+# makeMove('A7-a5')
 
 # makeMove('h4-H5')
 
