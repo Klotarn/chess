@@ -301,10 +301,6 @@ for i in range(8):
     y = 100
     drawPawn('maroon', x, y)
 
-# for row in range(len(board)):
-#     for col in range(len(board[row])):
-#         print(board[row][col].vert, board[row][col].horiz)
-
 whitePieces = []
 blackPieces = []
 
@@ -1489,8 +1485,6 @@ def newTurn():
     print('newTurn was called and next player is', app.playerMove)         
 
 def posPiece(pos, oldPos):
-    app.piece.centerX = pos[0]
-    app.piece.centerY = pos[1]
     
     dx = pos[0]-oldPos[0]
     dy = pos[1]-oldPos[1]
@@ -1508,11 +1502,42 @@ def posPiece(pos, oldPos):
             elif oldPos[0] == 340:
                 app.whiteRookRStart = False
         elif app.whiteLastMove[0] == 'White King':
-            app.whiteKingStart = False
             if dx == 80:
-                posRocked('right', app.playerMove)
+                ### check if rook is threatened
+                x = 340
+                y = 340
+                if app.legalMove == True:
+                    checkIfPosIsThreatened(app.playerMove, x, y)
+
+                ### check if king is threatened
+                x = 220
+                
+                if app.legalMove == True:
+                    checkIfPosIsThreatened(app.playerMove, x, y)
+
+                if app.legalMove == True:        
+                    posRocked('right', app.playerMove)
+                
             elif dx == -80:
-                posRocked('left', app.playerMove)
+                ### check if rook is threatened
+                x = 60
+                y = 340
+                if app.legalMove == True:
+                    checkIfPosIsThreatened(app.playerMove, x, y)
+
+                ### check if king is threatened
+
+                x = 220
+                
+                if app.legalMove == True:
+                    checkIfPosIsThreatened(app.playerMove, x, y)
+
+                if app.legalMove == True:        
+                    posRocked('left', app.playerMove)
+
+            if app.legalMove == True:
+
+                app.whiteKingStart = False
 
     elif app.playerMove == 'black':
         if app.blackLastMove[0] == 'Black Pawn' and pos[1] == 340:
@@ -1525,12 +1550,65 @@ def posPiece(pos, oldPos):
             elif oldPos[0] == 340:
                 app.blackRookRStart = False
         elif app.blackLastMove[0] == 'Black King':
-            app.blackKingStart = False
             if dx == 80:
-                posRocked('right', app.playerMove)
+                ### check if rook is threatened
+                x = 340
+                y = 60
+                if app.legalMove == True:
+                    checkIfPosIsThreatened(app.playerMove, x, y)
+
+                ### check if king is threatened
+                x = 220
+                
+                if app.legalMove == True:
+                    checkIfPosIsThreatened(app.playerMove, x, y)
+
+
+                if app.legalMove == True:        
+                    posRocked('right', app.playerMove)
+
+
+                    
             elif dx == -80:
-                posRocked('left', app.playerMove)
+                ### check if rook is threatened
+                x = 60
+                y = 60
+                if app.legalMove == True:
+                    checkIfPosIsThreatened(app.playerMove, x, y)
+
+                x = 220
+                
+                if app.legalMove == True:
+                    checkIfPosIsThreatened(app.playerMove, x, y)
+
+                if app.legalMove == True:        
+                    posRocked('left', app.playerMove)
             
+            if app.legalMove == True:
+
+                app.blackKingStart = False
+
+    if app.legalMove == True:
+        app.piece.centerX = pos[0]
+        app.piece.centerY = pos[1]
+            
+def checkIfPosIsThreatened(playerMove, x, y):
+    for i in range(4):
+        angle = 45 + 90 * i
+        if app.legalMove == True:
+            app.legalMove = threatCheckDiagonal(playerMove, angle, x, y, x, y, x, y)
+            # print('diagonal safe is', app.legalMove)
+
+    for i in range(4):
+        angle = 90 * i
+        if app.legalMove == True:
+            app.legalMove = threatCheckVertHoriz(playerMove, angle, x, y, x, y, x, y)
+            # print('vert horiz safe is', app.legalMove)
+
+    if app.legalMove == True:
+        app.legalMove = threatCheckKnights(playerMove, x, y, x, y)
+        # print('knight safe is', app.legalMove, x, y)
+
 def passantWipe():
     if app.playerMove == 'white':
         x = app.whiteLastMove[2]
@@ -1624,7 +1702,7 @@ def wipePiece():
 
                     delPiece = blackPieces.pop(i)
                     delPiece.visible = False
-                    print('removed piece with wipepiece function, player:', app.playerMove)
+                    # print('removed piece with wipepiece function, player:', app.playerMove)
         newTurn()
 
     elif app.playerMove == 'black':
@@ -1666,7 +1744,7 @@ def wipePiece():
                    
                     delPiece = whitePieces.pop(i)
                     delPiece.visible = False
-                    print('removed piece with wipepiece function, player:', app.playerMove)
+                    # print('removed piece with wipepiece function, player:', app.playerMove)
         newTurn()
 
 def getLastMove(piece, oldX, oldY, newX, newY):
@@ -1734,10 +1812,6 @@ def getLastMove(piece, oldX, oldY, newX, newY):
 
 def checkKingThreat(playerMove, oldPieceX, oldPieceY, newPieceX, newPieceY, kingX, kingY):
     isSafe = True
-    hitWhite = False
-    hitBlack = False
-    whitePos = [None, None]
-    blackPos = [None, None]
 
     lastMoveIsKing = False
 
@@ -1777,11 +1851,11 @@ def checkKingThreat(playerMove, oldPieceX, oldPieceY, newPieceX, newPieceY, king
                     break
         
         if isSafe == True:
-            isSafe = threatCheckKnights(playerMove, kingX, kingY)
+            isSafe = threatCheckKnights(playerMove, kingX, kingY, newPieceX, newPieceY)
 
         if isSafe == True:
             # print('checking threat from pawns')
-            isSafe = threatCheckPawns(playerMove, kingX, kingY)
+            isSafe = threatCheckPawns(playerMove, kingX, kingY, newPieceX, newPieceY)
 
     elif lastMoveIsKing == True:
         # print('-------- King was moved')
@@ -1804,11 +1878,11 @@ def checkKingThreat(playerMove, oldPieceX, oldPieceY, newPieceX, newPieceY, king
                     break
         
         if isSafe == True:
-            isSafe = threatCheckKnights(playerMove, newPieceX, newPieceY)
+            isSafe = threatCheckKnights(playerMove, newPieceX, newPieceY, newPieceX, newPieceY)
 
         if isSafe == True:
             # print('checking threat from pawns')
-            isSafe = threatCheckPawns(playerMove, newPieceX, newPieceY)
+            isSafe = threatCheckPawns(playerMove, newPieceX, newPieceY, newPieceX, newPieceY)
 
         if isSafe == True:
             # print('checking threat by king')
@@ -2208,7 +2282,7 @@ def threatCheckVertHoriz(playerMove, angle, oldPieceX, oldPieceY, newPieceX, new
 
     return isSafe
 
-def threatCheckKnights(playerMove, kingX, kingY):
+def threatCheckKnights(playerMove, kingX, kingY, newPieceX, newPieceY):
     
     isSafe = True
 
@@ -2231,6 +2305,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
     y1U = kingY - 40
     y2U = kingY - 80
 
+    enemyPos = [None, None]
+
     if kingX <= 100:
         checkLD = False
         checkLU = False
@@ -2249,7 +2325,7 @@ def threatCheckKnights(playerMove, kingX, kingY):
         checkUR = False
         if kingY == 60:
             checkRU = False
-            checkLu = False
+            checkLU = False
     elif kingY >= 300:
         checkDR = False
         checkDL = False
@@ -2266,6 +2342,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(blackKnights)):
                     if blackKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
             if checkUR == True and isSafe == True:
                 x = x1R
@@ -2273,6 +2351,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(blackKnights)):
                     if blackKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
 
             if checkRU == True and isSafe == True:
@@ -2281,6 +2361,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(blackKnights)):
                     if blackKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
             if checkRD == True and isSafe == True:
                 x = x2R
@@ -2288,6 +2370,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(blackKnights)):
                     if blackKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
 
             if checkDL == True and isSafe == True:
@@ -2296,6 +2380,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(blackKnights)):
                     if blackKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
             if checkDR == True and isSafe == True:
                 x = x1R
@@ -2303,6 +2389,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(blackKnights)):
                     if blackKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
 
             if checkLU == True and isSafe == True:
@@ -2311,6 +2399,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(blackKnights)):
                     if blackKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
             if checkLD == True and isSafe == True:
                 x = x2L
@@ -2318,6 +2408,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(blackKnights)):
                     if blackKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
    
     elif playerMove == 'black':
@@ -2329,6 +2421,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(whiteKnights)):
                     if whiteKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
             if checkUR == True and isSafe == True:
                 x = x1R
@@ -2336,6 +2430,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(whiteKnights)):
                     if whiteKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
 
             if checkRU == True and isSafe == True:
@@ -2344,6 +2440,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(whiteKnights)):
                     if whiteKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
             if checkRD == True and isSafe == True:
                 x = x2R
@@ -2351,6 +2449,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(whiteKnights)):
                     if whiteKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
 
             if checkDL == True and isSafe == True:
@@ -2359,6 +2459,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(whiteKnights)):
                     if whiteKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
             if checkDR == True and isSafe == True:
                 x = x1R
@@ -2366,6 +2468,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(whiteKnights)):
                     if whiteKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
 
             if checkLU == True and isSafe == True:
@@ -2374,6 +2478,8 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(whiteKnights)):
                     if whiteKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
             if checkLD == True and isSafe == True:
                 x = x2L
@@ -2381,12 +2487,24 @@ def threatCheckKnights(playerMove, kingX, kingY):
                 for i in range(len(whiteKnights)):
                     if whiteKnights[i].hits(x, y) and isSafe == True:
                         isSafe = False
+                        enemyPos[0] = x
+                        enemyPos[1] = y
                         # print('safe is false due to knight pos')
+
+    if enemyPos[0] == None:
+        isSafe = True
+        # print('safe is true due to no knight threatening')
+    
+    if newPieceX == enemyPos[0] and newPieceY == enemyPos[1]:
+        isSafe = True
+        # print('safe is true due to knocking the knight')
 
     return isSafe
 
-def threatCheckPawns(playerMove, kingX, kingY):
+def threatCheckPawns(playerMove, kingX, kingY, newPieceX, newPieceY):
     isSafe = True
+
+    enemyPos = [None, None]
 
     if playerMove == 'white':
         y = kingY - 40
@@ -2398,12 +2516,14 @@ def threatCheckPawns(playerMove, kingX, kingY):
                     for i in range(len(blackPawns)):
                         if blackPawns[i].hits(xL, y) and isSafe == True:
                             isSafe = False
+                            enemyPos = [xL, y]
                             # print('hit left pawn')
                             break
                 if kingX != 340:
                     for i in range(len(blackPawns)):
                         if blackPawns[i].hits(xR, y) and isSafe == True:
                             isSafe = False
+                            enemyPos = [xR, y]
                             # print('hit right pawn')
                             break
     elif playerMove == 'black':
@@ -2416,6 +2536,7 @@ def threatCheckPawns(playerMove, kingX, kingY):
                     for i in range(len(whitePawns)):
                         if whitePawns[i].hits(xL, y) and isSafe == True:
                             isSafe = False
+                            enemyPos = [xL, y]
                             # print(xL, y)
                             # print('hit left pawn')
                             break
@@ -2423,9 +2544,16 @@ def threatCheckPawns(playerMove, kingX, kingY):
                     for i in range(len(whitePawns)):
                         if whitePawns[i].hits(xR, y) and isSafe == True:
                             isSafe = False
+                            enemyPos = [xR, y]
                             # print('hit right pawn')
                             break
+    if enemyPos[0] == None:
+        isSafe = True
+        # print('safe due to no pawn threatening')
 
+    if enemyPos[0] == newPieceX and enemyPos[1] == newPieceY:
+        isSafe = True
+        # print('safe due to knocking pawn')
 
     return isSafe
 
@@ -2576,8 +2704,6 @@ def switchPawn(playerMove, x, y):
             elif playerMove == 'black':
                 blackPieces.append(blackRooks[len(blackRooks)-1])
 
-
-
 app.phase = 1
 app.piece = None
 app.playerMove = 'white'
@@ -2647,21 +2773,22 @@ def onMousePress(mouseX, mouseY):
                     app.blackLastMove = getLastMove(app.piece, oldPos[0], oldPos[1], pos[0], pos[1])
                     app.legalMove = checkKingThreat(app.playerMove, oldPos[0], oldPos[1], pos[0], pos[1], blackPieces[0].centerX, blackPieces[0].centerY)
 
-                print('---------------------------------')
-                print('legalMove is', app.legalMove)
+                
                 if app.legalMove == True:
                     posPiece(pos, oldPos)
 
-                    wipePiece()
+                    if app.legalMove == True:
+                        wipePiece()
+                print('legalMove is', app.legalMove)
                 
 
         selectedMarkers.clear()
         moveMarkers.clear()
 
         app.phase = 1
+        print('---------------------------------')
 
 def makeMove(move):
-    print(move[0], move[3])
     a1 = move[0]
     a2 = move[3]
 
@@ -2675,9 +2802,8 @@ def makeMove(move):
 
     if a2.islower() == True:
         a2 = a2.upper()
-    print(a1, a2)
     move = a1+move[1]+move[2]+a2+move[4]
-    # move[3] = a2
+    print(move)
 
     for i in range(len(boardHorizPos)):
         if move[0] == boardHorizPos[i]:
@@ -2698,9 +2824,9 @@ def makeMove(move):
 
 ### Test pawn switching
 
-# makeMove('h2-h4')
+makeMove('h2-h4')
 
-# makeMove('A7-a5')
+makeMove('A7-a5')
 
 # makeMove('h4-H5')
 
@@ -2732,88 +2858,106 @@ def makeMove(move):
 
 # makeMove('h7-h6')
 
-# a - 60
-# b - 100
-# c - 140
-# d - 180
-# e - 220
-# f - 260
-# g - 300
-# h - 340
-
-# 8 - 60
-# 7 - 100
-# 6 - 140
-# 5 - 180
-# 4 - 220
-# 3 - 260
-# 2 - 300
-# 1 - 340
 
 ### Test king
 
-makeMove('e2-e4')
+# makeMove('e2-e4')
 
-makeMove('e7-e5')
+# makeMove('e7-e5')
 
-makeMove('d1-g4')
+# makeMove('d1-g4')
 
-makeMove('d8-g6')
+# makeMove('d8-g5')
 
-makeMove('f1-c5')
+# makeMove('f1-c4')
 
-makeMove('f8-c5')
+# makeMove('f8-c5')
 
-# onMousePress(180, 300)
-# onMousePress(180, 220)
+# makeMove('d2-d4')
 
-# onMousePress(180, 100)
-# onMousePress(180, 180)
+# makeMove('d7-d5')
 
-# onMousePress(260, 300)
-# onMousePress(260, 220)
+# makeMove('f2-f4')
 
-# onMousePress(260, 100)
-# onMousePress(260, 180)
+# makeMove('f7-f5')
 
-# onMousePress(140, 340)
-# onMousePress(220, 260)
+# makeMove('c1-e3')
 
 ### stop here for passant bug check
 
-# onMousePress(140, 60)
-# onMousePress(220, 140)
+# makeMove('c8-e6')
 
-# onMousePress(100, 340)
-# onMousePress(60, 260)
+# makeMove('b1-a3')
 
-# onMousePress(100, 60)
-# onMousePress(60, 140)
+# makeMove('b8-a6')
 
-# onMousePress(300, 340)
-# onMousePress(340, 260)
+# makeMove('g1-h3')
 
-# onMousePress(300, 60)
-# onMousePress(340, 140)
+# makeMove('g8-h6')
 
-# onMousePress(220, 220)
-# onMousePress(180, 180)
+# makeMove('e4-d5')
 
-# onMousePress(220, 180)
-# onMousePress(180, 220)
+# makeMove('e5-d4')
 
-# onMousePress(220, 260)
-# onMousePress(180, 220)
+# makeMove('e3-d4')
 
-# onMousePress(300, 180)
-# onMousePress(260, 220)
+# makeMove('g5-f4')
 
-# onMousePress(180, 220)
-# onMousePress(220, 260)
+# makeMove('d4-e3')
 
-# onMousePress(260, 220)
-# onMousePress(220, 220)
+# makeMove('f4-e4')
 
-# Rect(40, 40, 40, 40, opacity = 1)
+# makeMove('b1-a3')
+
+# makeMove('b8-a6')
+
+# makeMove('e2-e3')
+
+# makeMove('e7-e6')
+
+# makeMove('a3-b5')
+
+# makeMove('a6-b4')
+
+# makeMove('f2-f4')
+
+# makeMove('f7-f5')
+
+# makeMove('g1-f3')
+
+# makeMove('g8-f6')
+
+# makeMove('g2-g4')
+
+# makeMove('g7-g5')
+
+# makeMove('f1-h3')
+
+# makeMove('f8-h6')
+
+# makeMove('b5-c3')
+
+# makeMove('b4-c6')
+
+# makeMove('d2-d3')
+
+# makeMove('d7-d6')
+
+# makeMove('d1-e2')
+
+# makeMove('d8-e7')
+
+# makeMove('c1-d2')
+
+# makeMove('c8-d7')
+
+# makeMove('e4-g5')
+
+# makeMove('e5-g4')
+
+
+###
+
+# makeMove('g5-f7')
 
 cmu_graphics.run()
