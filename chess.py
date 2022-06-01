@@ -12,7 +12,7 @@ board = makeList(app.rows, app.cols)
 boardHorizPos = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
 boardVertPos = ['8', '7', '6', '5', '4', '3', '2', '1']
 
-pROpacity = 1
+pROpacity = 0
 
 def drawLabel(value, x, y):
     Label(value, x, y, size = 20)
@@ -2725,6 +2725,7 @@ def onMousePress(mouseX, mouseY):
   
     ### Selects piece
     if app.phase == 1:
+        print('---------------------------------')
         piece = selectPiece(app.playerMove, mouseX, mouseY)
         ### Checks what moves are available
         if piece != None:
@@ -2786,7 +2787,6 @@ def onMousePress(mouseX, mouseY):
         moveMarkers.clear()
 
         app.phase = 1
-        print('---------------------------------')
 
 def makeMove(move):
     a1 = move[0]
@@ -2803,7 +2803,6 @@ def makeMove(move):
     if a2.islower() == True:
         a2 = a2.upper()
     move = a1+move[1]+move[2]+a2+move[4]
-    print(move)
 
     for i in range(len(boardHorizPos)):
         if move[0] == boardHorizPos[i]:
@@ -2819,6 +2818,8 @@ def makeMove(move):
 
     onMousePress(x1, y1)
     onMousePress(x2, y2)
+
+    print(move)
 
 ### Test
 
@@ -2907,57 +2908,63 @@ def makeMove(move):
 
 # makeMove('f4-e4')
 
-# makeMove('b1-a3')
 
-# makeMove('b8-a6')
+def testingCastle(threaten):
+    makeMove('b1-a3')
+    makeMove('b8-a6')
 
-# makeMove('e2-e3')
+    makeMove('e2-e3')
+    makeMove('e7-e6')
 
-# makeMove('e7-e6')
+    makeMove('a3-b5')
+    makeMove('a6-b4')
 
-# makeMove('a3-b5')
+    makeMove('f2-f4')
+    makeMove('f7-f5')
 
-# makeMove('a6-b4')
+    makeMove('g1-f3')
+    makeMove('g8-f6')
 
-# makeMove('f2-f4')
+    makeMove('g2-g4')
+    makeMove('g7-g5')
 
-# makeMove('f7-f5')
+    makeMove('f1-h3')
+    makeMove('f8-h6')
 
-# makeMove('g1-f3')
+    makeMove('b5-c3')
+    makeMove('b4-c6')
 
-# makeMove('g8-f6')
+    makeMove('d2-d3')
+    makeMove('d7-d6')
 
-# makeMove('g2-g4')
+    makeMove('d1-e2')
+    makeMove('d8-e7')
 
-# makeMove('g7-g5')
+    makeMove('c1-d2')
+    makeMove('c8-d7')
 
-# makeMove('f1-h3')
+    if threaten == 'king':
+        testingCastleKingThreat()
 
-# makeMove('f8-h6')
+    elif threaten == 'rook':
+        testingCastleRookThreat()
 
-# makeMove('b5-c3')
+def testingCastleKingThreat():
+    makeMove('f3-g5')
+    makeMove('f6-g4')
 
-# makeMove('b4-c6')
+    makeMove('g5-e6')
+    makeMove('g4-e3')
 
-# makeMove('d2-d3')
+    makeMove('e6-g7')
 
-# makeMove('d7-d6')
+def testingCastleRookThreat():
+    makeMove('f3-g5')
+    makeMove('f6-g4')
 
-# makeMove('d1-e2')
-
-# makeMove('d8-e7')
-
-# makeMove('c1-d2')
-
-# makeMove('c8-d7')
-
-# makeMove('e4-g5')
-
-# makeMove('e5-g4')
+# testingCastle('king')
+testingCastle('rook')
 
 
-###
-
-# makeMove('g5-f7')
 
 cmu_graphics.run()
