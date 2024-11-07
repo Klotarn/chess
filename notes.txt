@@ -1,0 +1,5 @@
+kingstart disables if castle is tried but failed -- fix
+maybe fix by moving castle checking to before posPiece function
+-- fixed by moving statement declaring king having made move to after the castling testing.
+
+check if check-mate if legalMove returns false?
